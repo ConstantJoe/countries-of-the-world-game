@@ -1,0 +1,8 @@
+.startbox{
+			background-color: red;
+			height: 130px;
+			width: 200px;
+			position: absolute;
+			margin-left: 75px;
+			margin-top: 75px;
+}

@@ -7,7 +7,9 @@
     <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.14.0/mapbox-gl.js'></script>
     <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.14.0/mapbox-gl.css' rel='stylesheet' />
      <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.css" />
+      <link rel="stylesheet" href="/static/css/map.css" />
      <script src="http://cdn.leafletjs.com/leaflet/v0.7.7/leaflet.js"></script>
+     <script src="/static/countries.js"></script>
      
     <style>
         body { margin:0; padding:0; }
@@ -17,6 +19,10 @@
 <body>
 
 <div id='map'></div>
+<div class="startbox"> Start the game! 
+<input id="textbox" type="text" oninput='findCountry()'> </input>
+<p id="numbox">0</p>
+</div>
 <script>
 mapboxgl.accessToken = 'pk.eyJ1IjoiY29uc3RhbnRqb2UiLCJhIjoiY2lrZzI0M2FzMDAycHdsa2l0bHZvdW42aiJ9.r97nrxuGMShODVHL9I66nQ';
 var map = new mapboxgl.Map({
@@ -27,68 +33,959 @@ var map = new mapboxgl.Map({
 });
 
 map.on('style.load', function () {
-    /*map.addSource('maine', {
-        'type': 'geojson',
-        'data': {
-            'type': 'Feature',
-            'properties': {
-                'name': 'Maine'
-            },
-            'geometry': {
-                'type': 'Polygon',
-                'coordinates': [[[-67.13734351262877, 45.137451890638886],
-                    [-66.96466, 44.8097],
-                    [-68.03252, 44.3252],
-                    [-69.06, 43.98],
-                    [-70.11617, 43.68405],
-                    [-70.64573401557249, 43.090083319667144],
-                    [-70.75102474636725, 43.08003225358635],
-                    [-70.79761105007827, 43.21973948828747],
-                    [-70.98176001655037, 43.36789581966826],
-                    [-70.94416541205806, 43.46633942318431],
-                    [-71.08482, 45.3052400000002],
-                    [-70.6600225491012, 45.46022288673396],
-                    [-70.30495378282376, 45.914794623389355],
-                    [-70.00014034695016, 46.69317088478567],
-                    [-69.23708614772835, 47.44777598732787],
-                    [-68.90478084987546, 47.184794623394396],
-                    [-68.23430497910454, 47.35462921812177],
-                    [-67.79035274928509, 47.066248887716995],
-                    [-67.79141211614706, 45.702585354182816],
-                    [-67.13734351262877, 45.137451890638886]]]
-            }
-        }
-    });
-    
-    map.addLayer({
-        'id': 'route',
-        'type': 'fill',
-        'source': 'maine',
-        'layout': {},
-        'paint': {
-            'fill-color': '#088',
-            'fill-opacity': 0.8
-        }
-    });*/
-    
-    //var data = require('/static/countries/ARG.geo.json');
-    var jsonString = '{"type":"geojson","data":{"type":"Feature","id":"ARE","properties":{"name":"United Arab Emirates"},"geometry":{"type":"Polygon","coordinates":[[[51.579519,24.245497],[51.757441,24.294073],[51.794389,24.019826],[52.577081,24.177439],[53.404007,24.151317],[54.008001,24.121758],[54.693024,24.797892],[55.439025,25.439145],[56.070821,26.055464],[56.261042,25.714606],[56.396847,24.924732],[55.886233,24.920831],[55.804119,24.269604],[55.981214,24.130543],[55.528632,23.933604],[55.525841,23.524869],[55.234489,23.110993],[55.208341,22.70833],[55.006803,22.496948],[52.000733,23.001154],[51.617708,24.014219],[51.579519,24.245497]]]}}}';
-    var data = eval('(' + jsonString + ')');
-   
-    map.addSource('countries', data);
-    
-    map.addLayer({
-        'id': 'route',
-        'type': 'fill',
-        'source': 'countries',
-        'layout': {},
-        'paint': {
-            'fill-color': '#088',
-            'fill-opacity': 0.8
-        }
-    });
 });
 
+var countries_found = 0;
+
+//colours
+var A = "#003fff";
+var B = "#ff7373";
+var C = "#ffff33";
+var D = "#00ff7f";
+
+
+/**
+TO BE DONE
+
+Assign a colour to each country using 4 colour theorem
+Enable more than one data package to be used for a colour (e.g. for France or UK)
+Get better data, with all the countries. 
+Somalia is also missing somaliland.
+Egypt includes most of western sahara
+Make overlay look nicer.
+Add a timer, and start button
+Allow user to select language
+Move javascript to seperate file
+**/
+
+list_of_countries = {
+"afghanistan" : 0, 
+"angola" : 0, 
+"albania" : 0, 
+"argentina" : 0, 
+"albania" : 0,
+"argentina" : 0,
+"armenia" : 0,
+"australia" : 0,
+"austria" : 0,
+"azerbaijan" : 0,
+"burundi" : 0,
+"belgium" : 0,
+"benin" : 0,
+"burkina faso" : 0,
+"bangladesh" : 0,
+"bulgaria" : 0,
+"bahamas" : 0,
+"bosnia-herzegovina" : 0,
+"belize" : 0,
+"belarus" : 0,
+"bolivia" : 0,
+"brazil" : 0,
+"brunei" : 0,
+"bhutan" : 0,
+"botswana" : 0,
+"central african republic" : 0,
+"canada" : 0,
+"switzerland" : 0,
+"chile" : 0,
+"china" : 0,
+"ivory coast" : 0,
+"cameroon" : 0,
+"democratic republic of the congo" : 0,
+"republic of the congo" : 0,
+"colombia" : 0,
+"costa rica" : 0,
+"kosovo" : 0,
+"cuba" : 0,
+"cyprus" : 0,
+"czech republic" : 0,
+"germany" : 0,
+"djibouti" : 0,
+"denmark" : 0,
+"dominican republic" : 0,
+"algeria" : 0,
+"ecuador" : 0,
+"egypt" : 0,
+"eritrea" : 0,
+"western sahara" : 0,
+"spain" : 0,
+"estonia" : 0,
+"ethiopia" : 0,
+"finland" : 0,
+"fiji" : 0,
+"france" : 0,
+"gabon" : 0,
+"united kingdom" : 0,
+"georgia" : 0,
+"ghana" : 0,
+"guinea" : 0,
+"gambia" : 0,
+"guinea-bissau" : 0,
+"equatorial guinea" : 0,
+"greece" : 0,
+"guatemala" : 0,
+"guyana" : 0,
+"honduras" : 0,
+"croatia" : 0,
+"haiti" : 0,
+"hungary" : 0,
+"indonesia" : 0,
+"india" : 0,
+"ireland" : 0,
+"iran" : 0,
+"iraq" : 0,
+"iceland" : 0,
+"israel" : 0,
+"italy" : 0,
+"jamaica" : 0,
+"jordan" : 0,
+"japan" : 0,
+"kazakhstan" : 0,
+"kenya" : 0,
+"kyrgyzstan" : 0,
+"cambodia" : 0,
+"south korea" : 0,
+"kuwait" : 0,
+"laos" : 0,
+"lebanon" : 0,
+"liberia" : 0,
+"libya" : 0,
+"sri lanka" : 0,
+"lesotho" : 0,
+"lithuania" : 0,
+"luxembourg" : 0,
+"latvia" : 0,
+"morocco" : 0,
+"moldova" : 0,
+"madagascar" : 0,
+"mexico" : 0,
+"fyr macedonia" : 0,
+"mali" : 0,
+"myanmar" : 0,
+"montenegro" : 0,
+"mongolia" : 0,
+"mozambique" : 0,
+"mauritania" : 0,
+"malawi" : 0,
+"malaysia" : 0,
+"namibia" : 0,
+"niger" : 0,
+"nigeria" : 0,
+"nicaragua" : 0,
+"netherlands" : 0,
+"norway" : 0,
+"nepal" : 0,
+"new zealand" : 0,
+"oman" : 0,
+"pakistan" : 0,
+"panama" : 0,
+"peru" : 0,
+"philippines" : 0,
+"papua new guinea" : 0,
+"poland" : 0,
+"north korea" : 0,
+"portugal" : 0,
+"paraguay" : 0,
+"palestine" : 0,
+"qatar" : 0,
+"romania" : 0,
+"russia" : 0,
+"rwanda" : 0,
+"saudi arabia" : 0,
+"sudan" : 0,
+"senegal" : 0,
+"soloman islands" : 0,
+"sierra leone" : 0,
+"el salvador" : 0,
+"somalia" : 0,
+"serbia" : 0,
+"south sudan" : 0,
+"suriname" : 0,
+"slovakia" : 0,
+"slovenia" : 0,
+"sweden" : 0,
+"swaziland" : 0,
+"syria" : 0,
+"chad" : 0,
+"togo" : 0,
+"thailand" : 0,
+"tajikistan" : 0,
+"turkmenistan" : 0,
+"east timor" : 0,
+"trinidad and tobago" : 0,
+"tunisia" : 0,
+"turkey" : 0,
+"taiwan" : 0,
+"tanzania" : 0,
+"uganda" : 0,
+"ukraine" : 0,
+"uruguay" : 0,
+"usa" : 0,
+"uae" : 0,
+"uzbekistan" : 0,
+"venezuela" : 0,
+"vietnam" : 0,
+"vanuatu" : 0,
+"yemen" : 0,
+"south africa" : 0,
+"zambia" : 0,
+"zimbabwe" : 0,
+ }
+
+var english = {
+	"the bahamas" : "bahamas",
+	"bosnia and herzegovina" : "bosnia-herzegovina",
+	"car" : "central african republic",
+	"dr congo" : "democratic republic of the congo",
+	"congo republic" : "republic of the congo",
+	"sahrawi arab democratic republic" : "western sahara",
+	"great britain" : "united kingdom",
+	"uk" : "united kingdom",
+	"guinea bissau" : "guinea-bissau",
+	"the gambia" : "gambia",
+	"cote d'ivoire" : "ivory coast",
+	"republic of ireland" : "ireland",
+	"macedonia" : "fyr macedonia",
+	"burma" : "myanmar",
+	"the philippines" : "philippines",
+	"west bank" : "palestine",
+	"taipei" : "taiwan",
+	"the ukraine" : "ukraine",
+	"united states of america" : "usa",
+	"america" : "usa", 
+	"united arab emirates" : "uae"
+}
+
+function localization(country, language)
+{
+	if (typeof language[country] !== 'undefined')
+	{
+		return language[country];	
+	} 
+	else
+	{
+		return country;	
+	}
+}
+
+function findCountry(){
+	var country = document.getElementById('textbox').value;
+	country = country.toLowerCase();
+	country = localization(country, english)
+	var data = "";
+	var colour = "";
+
+	if(list_of_countries[country] === 0)
+	{
+		var found = true;
+
+		list_of_countries[country]++;
+		switch(country){
+		case "afghanistan":
+			data = eval('(' + countries.Afghanistan + ')');
+			colour = A;
+			break;
+		case "angola":
+			data = eval('(' + countries.Angola + ')');
+			colour = B;
+			break;
+		case "albania":
+			data = eval('(' + countries.Albania + ')');
+			colour = C;
+			break;
+		case "argentina":
+			data = eval('(' + countries.Argentina + ')');
+			colour = C;
+			break;
+		case "armenia":
+			data = eval('(' + countries.Armenia + ')');
+			colour = D;
+			break;
+		case "australia":
+			data = eval('(' + countries.Australia + ')');
+			colour = C;
+			break;
+		case "austria":
+			data = eval('(' + countries.Austria + ')');
+			colour = A;
+			break;
+		case "azerbaijan":
+			data = eval('(' + countries.Azerbaijan + ')');
+			colour = A;
+			break;
+		case "burundi":
+			data = eval('(' + countries.Burundi + ')');
+			colour = B;
+			break;
+		case "belgium":
+			data = eval('(' + countries.Belgium + ')');
+			colour = A;
+			break;
+		case  "benin":
+			data = eval('(' + countries.Benin + ')');
+			colour = D;
+			break;
+		case "burkina faso":
+			data = eval('(' + countries.Burkina_Faso + ')');
+			colour = B;
+			break;
+		case "bangladesh":
+			data = eval('(' + countries.Bangladesh + ')');
+			colour = B;
+			break;
+		case "bulgaria":
+			data = eval('(' + countries.Bulgaria + ')');
+			colour = C;
+			break;
+		case "bahamas":
+			data = eval('(' + countries.The_Bahamas + ')');
+			colour = C;
+			break;
+		case "bosnia-herzegovina":
+			data = eval('(' + countries.Bosnia_and_Herzegovina + ')');
+			colour = C;
+			break;
+		case "belarus":
+			data = eval('(' + countries.Belarus + ')');
+			colour = C;
+			break;
+		case "belize":
+			data = eval('(' + countries.Belize + ')');
+			colour = B;
+			break;
+		case "bolivia":
+			data = eval('(' + countries.Bolivia + ')');
+			colour = B;
+			break;
+		case "brunei":
+			data = eval('(' + countries.Brunei + ')');
+			colour = D;
+			break;
+		case "brazil":
+			data = eval('(' + countries.Brazil + ')');
+			colour = A;
+			break;
+		case "bhutan":
+			data = eval('(' + countries.Bhutan + ')');
+			colour = C;
+			break;
+		case "botswana":
+			data = eval('(' + countries.Botswana + ')');
+			colour = B;
+			break;
+		case "central african republic":
+			data = eval('(' + countries.Central_African_Republic + ')');
+			colour = B;
+			break;
+		case "canada":
+			data = eval('(' + countries.Canada + ')');
+			colour = D;
+			break;
+		case "cameroon":
+			data = eval('(' + countries.Cameroon + ')');
+			colour = D;
+			break;
+		case "democratic republic of the congo":
+			data = eval('(' + countries.Democratic_Republic_Of_The_Congo + ')');
+			colour = C;
+			break;
+		case "republic of the congo":
+			data = eval('(' + countries.Republic_Of_The_Congo + ')');
+			colour = A;
+			break;
+		case "chile":
+			data = eval('(' + countries.Chile + ')');
+			colour = A;
+			break;
+		case "china":
+			data = eval('(' + countries.China + ')');
+			colour = B;
+			break;
+		case "colombia":
+			data = eval('(' + countries.Colombia + ')');
+			colour = D;
+			break;
+		case "costa rica":
+			data = eval('(' + countries.Costa_Rica + ')');
+			colour = B;
+			break;
+		case "cuba":
+			data = eval('(' + countries.Cuba + ')');
+			colour = D;
+			break;
+		case "cyprus":
+			data = eval('(' + countries.Cyprus + ')');
+			colour = C;
+			break;
+		case "czech republic":
+			data = eval('(' + countries.Czech_Republic + ')');
+			colour = B;
+			break;
+		case "germany":
+			data = eval('(' + countries.Germany + ')');
+			colour = C;
+			break;
+		case "djibouti":
+			data = eval('(' + countries.Djibouti + ')');
+			colour = D;
+			break;
+		case "denmark":
+			data = eval('(' + countries.Denmark + ')');
+			colour = A;
+			break;
+		case "dominican republic":
+			data = eval('(' + countries.Dominican_Republic + ')');
+			colour = D;
+			break;
+		case "algeria":
+			data = eval('(' + countries.Algeria + ')');
+			colour = D;
+			break;
+		case "ecuador":
+			data = eval('(' + countries.Ecuador + ')');
+			colour = A;
+			break;
+		case "egypt":
+			data = eval('(' + countries.Egypt + ')');
+			colour = A;
+			break;
+		case "eritrea":
+			data = eval('(' + countries.Eritrea + ')');
+			colour = A;
+			break;
+		case "ethiopia":
+			data = eval('(' + countries.Ethiopia + ')');
+			colour = B;
+			break;
+		case "western sahara":
+			data = eval('(' + countries.Western_Sahara + ')');
+			colour = B;
+			break;
+		case "spain":
+			data = eval('(' + countries.Spain + ')');
+			colour = C;
+			break;
+		case "estonia":
+			data = eval('(' + countries.Estonia + ')');
+			colour = B;
+			break;
+		case "finland":
+			data = eval('(' + countries.Finland + ')');
+			colour = C;
+			break;
+		case "fiji":
+			data = eval('(' + countries.Fiji + ')');
+			colour = A;
+			break;
+		case "france":
+			data = eval('(' + countries.France + ')');
+			colour = B;
+			break;
+		case "gabon":
+			data = eval('(' + countries.Gabon + ')');
+			colour = C;
+			break;
+		case "gambia":
+			data = eval('(' + countries.Gambia + ')');
+			colour = C;
+			break;
+		case "united kingdom":
+			data = eval('(' + countries.United_Kingdom + ')');
+			colour = D;
+			break;
+		case "georgia":
+			data = eval('(' + countries.Georgia + ')');
+			colour = C;
+			break;
+		case "ghana":
+			data = eval('(' + countries.Ghana + ')');
+			colour = A;
+			break;
+		case "guinea-bissau":
+			data = eval('(' + countries.Guinea-Bissau + ')');
+			colour = A;
+			break;
+		case "guinea":
+			data = eval('(' + countries.Guinea + ')');
+			colour = B;
+			break;
+		case "equatorial guinea":
+			data = eval('(' + countries.Equatorial_Guinea + ')');
+			colour = A;
+			break;
+		case "greece":
+			data = eval('(' + countries.Greece + ')');
+			colour = B;
+			break;
+		case "guatemala":
+			data = eval('(' + countries.Guatemala + ')');
+			colour = D;
+			break;
+		case "guyana":
+			data = eval('(' + countries.Guyana + ')');
+			colour = C;
+			break;
+		case "honduras":
+			data = eval('(' + countries.Honduras + ')');
+			colour = A;
+			break;
+		case "croatia":
+			data = eval('(' + countries.Croatia + ')');
+			colour = A;
+			break;
+		case "haiti":
+			data = eval('(' + countries.Haiti + ')');
+			colour = A;
+			break;
+		case "hungary":
+			data = eval('(' + countries.Hungary + ')');
+			colour = C;
+			break;
+		case "indonesia":
+			data = eval('(' + countries.Indonesia + ')');
+			colour = B;
+			break;
+		case "india":
+			data = eval('(' + countries.India + ')');
+			colour = D;
+			break;		
+		case "kosovo":
+			data = eval('(' + countries.Kosovo + ')');
+			colour = C;
+			break;
+		case "ivory coast":
+			data = eval('(' + countries.Ivory_Coast + ')');
+			colour = D;
+			break;
+		case "ireland":
+			data = eval('(' + countries.Ireland + ')');
+			colour = B;
+			break;
+		case "iran":
+			data = eval('(' + countries.Iran + ')');
+			colour = B;
+			break;
+		case "iraq":
+			data = eval('(' + countries.Iraq + ')');
+			colour = C;
+			break;
+		case "iceland":
+			data = eval('(' + countries.Iceland + ')');
+			colour = C;
+			break;
+		case "israel":
+			data = eval('(' + countries.Israel + ')');
+			colour = C;
+			break;
+		case "italy":
+			data = eval('(' + countries.Italy + ')');
+			colour = C;
+			break;
+		case "jamaica":
+			data = eval('(' + countries.Jamaica + ')');
+			colour = C;
+			break;
+		case "jordan":
+			data = eval('(' + countries.Jordan + ')');
+			colour = A;
+			break;
+		case "japan":
+			data = eval('(' + countries.Japan + ')');
+			colour = A;
+			break;
+		case "kazakhstan":
+			data = eval('(' + countries.Kazakhstan + ')');
+			colour = C;
+			break;
+		case "kenya":
+			data = eval('(' + countries.Kenya + ')');
+			colour = A;
+			break;
+		case "kyrgyzstan":
+			data = eval('(' + countries.Kyrgyzstan + ')');
+			colour = D;
+			break;
+		case "cambodia":
+			data = eval('(' + countries.Cambodia + ')');
+			colour = A;
+			break;
+		case "south korea":
+			data = eval('(' + countries.South_Korea + ')');
+			colour = D;
+			break;
+		case "kuwait":
+			data = eval('(' + countries.Kuwait + ')');
+			colour = A;
+			break;
+		case "laos":
+			data = eval('(' + countries.Laos + ')');
+			colour = C;
+			break;
+		case "lebanon":
+			data = eval('(' + countries.Lebanon + ')');
+			colour = B;
+			break;
+		case "liberia":
+			data = eval('(' + countries.Liberia + ')');
+			colour = C;
+			break;
+		case "libya":
+			data = eval('(' + countries.Libya + ')');
+			colour = B;
+			break;
+		case "sri lanka":
+			data = eval('(' + countries.Sri_Lanka + ')');
+			colour = C;
+			break;
+		case "lesotho":
+			data = eval('(' + countries.Lesotho + ')');
+			colour = C;
+			break;
+		case "lithuania":
+			data = eval('(' + countries.Lithuania + ')');
+			colour = B;
+			break;
+		case "luxembourg":
+			data = eval('(' + countries.Luxembourg + ')');
+			colour = D;
+			break;
+		case "latvia":
+			data = eval('(' + countries.Latvia + ')');
+			colour = A;
+			break;
+		case "morocco":
+			data = eval('(' + countries.Morocco + ')');
+			colour = A;
+			break;
+		case "moldova":
+			data = eval('(' + countries.Moldova + ')');
+			colour = D;
+			break;
+		case "madagascar":
+			data = eval('(' + countries.Madagascar + ')');
+			colour = D;
+			break;
+		case "mexico":
+			data = eval('(' + countries.Mexico + ')');
+			colour = C;
+			break;
+		case "fyr macedonia":
+			data = eval('(' + countries.Macedonia + ')');
+			colour = D;
+			break;
+		case "mali":
+			data = eval('(' + countries.Mali + ')');
+			colour = A;
+			break;
+		case "malta":
+			data = eval('(' + countries.Malta + ')');
+			colour = B;
+			break;
+		case "myanmar":
+			data = eval('(' + countries.Myanmar + ')');
+			colour = A;
+			break;
+		case "montenegro":
+			data = eval('(' + countries.Montenegro + ')');
+			colour = D;
+			break;
+		case "mongolia":
+			data = eval('(' + countries.Mongolia + ')');
+			colour = A;
+			break;
+		case "mozambique":
+			data = eval('(' + countries.Mozambique + ')');
+			colour = B;
+			break;
+		case "mauritania":
+			data = eval('(' + countries.Mauritania + ')');
+			colour = C;
+			break;
+		case "malawi":
+			data = eval('(' + countries.Malawi + ')');
+			colour = C;
+			break;
+		case "malaysia":
+			data = eval('(' + countries.Malaysia + ')');
+			colour = C;
+			break;
+		case "namibia":
+			data = eval('(' + countries.Namibia + ')');
+			colour = D;
+			break;
+		case "niger":
+			data = eval('(' + countries.Niger + ')');
+			colour = C;
+			break;
+		case "nigeria":
+			data = eval('(' + countries.Nigeria + ')');
+			colour = B;
+			break;
+		case "nicaragua":
+			data = eval('(' + countries.Nicaragua + ')');
+			colour = D;
+			break;
+		case "netherlands":
+			data = eval('(' + countries.Netherlands + ')');
+			colour = D;
+			break;
+		case "norway":
+			data = eval('(' + countries.Norway + ')');
+			colour = B;
+			break;
+		case "nepal":
+			data = eval('(' + countries.Nepal + ')');
+			colour = A;
+			break;
+		case "new zealand":
+			data = eval('(' + countries.New_Zealand + ')');
+			colour = D;
+			break;
+		case "oman":
+			data = eval('(' + countries.Oman + ')');
+			colour = B;
+			break;
+		case "pakistan":
+			data = eval('(' + countries.Pakistan + ')');
+			colour = C;
+			break;
+		case "panama":
+			data = eval('(' + countries.Panama + ')');
+			colour = A;
+			break;
+		case "paraguay":
+			data = eval('(' + countries.Paraguay + ')');
+			colour = D;
+			break;
+		case "peru":
+			data = eval('(' + countries.Peru + ')');
+			colour = C;
+			break;
+		case "philippines":
+			data = eval('(' + countries.Philippines + ')');
+			colour = A;
+			break;
+		case "papua new guinea":
+			data = eval('(' + countries.Papua_New_Guinea + ')');
+			colour = A;
+			break;
+		case "poland":
+			data = eval('(' + countries.Poland + ')');
+			colour = A;
+			break;
+		case "north korea":
+			data = eval('(' + countries.North_Korea + ')');
+			colour = C;
+			break;
+		case "portugal":
+			data = eval('(' + countries.Portugal + ')')
+			colour = D;
+			break;
+		case "palestine":
+			data = eval('(' + countries.West_Bank + ')');
+			colour = B;
+			break;
+		case "qatar":
+			data = eval('(' + countries.Qatar + ')');
+			colour = A;
+			break;
+		case "romania":
+			data = eval('(' + countries.Romania + ')');
+			colour = A;
+			break;
+		case "russia":
+			data = eval('(' + countries.Russia + ')');
+			colour = D;
+			break;
+		case "rwanda":
+			data = eval('(' + countries.Rwanda + ')');
+			colour = A;
+			break;
+		case "saudi arabia":
+			data = eval('(' + countries.Saudi_Arabia + ')');
+			colour = D;
+			break;
+		case "sudan":
+			data = eval('(' + countries.Sudan + ')');
+			colour = C;
+			break;
+		case "senegal":
+			data = eval('(' + countries.Senegal + ')');
+			colour = D;
+			break;
+		case "soloman islands":
+			data = eval('(' + countries.Soloman_Islands + ')');
+			colour = D;
+			break;
+		case "sierra leone":
+			data = eval('(' + countries.Sierra_Leone + ')');
+			colour = A;
+			break;
+		case "el salvador":
+			data = eval('(' + countries.El_Salvador + ')');
+			colour = C;
+			break;
+		case "somalia":
+			data = eval('(' + countries.Somalia + ')');
+			colour = C;
+			break;
+		case "serbia":
+			data = eval('(' + countries.Serbia + ')');
+			colour = B;
+			break;
+		case "south sudan":
+			data = eval('(' + countries.South_Sudan + ')');
+			colour = D;
+			break;
+		case "suriname":
+			data = eval('(' + countries.Suriname + ')');
+			colour = D;
+			break;
+		case "slovakia":
+			data = eval('(' + countries.Slovakia + ')');
+			colour = D;
+			break;
+		case "slovenia":
+			data = eval('(' + countries.Slovenia + ')');
+			colour = B;
+			break;
+		case "sweden":
+			data = eval('(' + countries.Sweden + ')');
+			colour = D;
+			break;
+		case "swaziland":
+			data = eval('(' + countries.Swaziland + ')');
+			colour = D;
+			break;
+		case "syria":
+			data = eval('(' + countries.Syria + ')');
+			colour = D;
+			break;
+		case "switzerland":
+			data = eval('(' + countries.Switzerland + ')');
+			colour = D;
+			break;
+		case "chad":
+			data = eval('(' + countries.Chad + ')');
+			colour = A;
+			break;
+		case "togo":
+			data = eval('(' + countries.Togo + ')');
+			colour = C;
+			break;
+		case "thailand":
+			data = eval('(' + countries.Thailand + ')');
+			colour = A;
+			break;
+		case "tajikistan":
+			data = eval('(' + countries.Tajikistan + ')');
+			colour = C;
+			break;
+		case "turkmenistan":
+			data = eval('(' + countries.Turkmenistan + ')');
+			colour = D;
+			break;
+		case "east timor":
+			data = eval('(' + countries.East_Timor + ')');
+			colour = D;
+			break;
+		case "trinidad and tobago":
+			data = eval('(' + countries.Trinidad_and_Tobago + ')');
+			colour = D;
+			break;
+		case "tunisia":
+			data = eval('(' + countries.Tunisia + ')');
+			colour = A;
+			break;
+		case "turkey":
+			data = eval('(' + countries.Turkey + ')');
+			colour = A;
+			break;
+		case "taiwan":
+			data = eval('(' + countries.Taiwan + ')');
+			colour = C;
+			break;
+		case "tanzania":
+			data = eval('(' + countries.Tanzania + ')');
+			colour = D;
+			break;
+		case "uganda":
+			data = eval('(' + countries.Uganda + ')');
+			colour = B;
+			break;
+		case "ukraine":
+			data = eval('(' + countries.Ukraine + ')');
+			colour = B;
+			break;
+		case "uruguay":
+			data = eval('(' + countries.Uruguay + ')');
+			colour = D;
+			break;
+		case "usa":
+			data = eval('(' + countries.USA + ')');
+			colour = B;
+			break;
+		case "uzbekistan":
+			data = eval('(' + countries.Uzbekistan + ')');
+			colour = B;
+			break;
+		case "venezuela":
+			data = eval('(' + countries.Venezuela + ')');
+			colour = B;
+			break;
+		case "vietnam":
+			data = eval('(' + countries.Vietnam + ')');
+			colour = B;
+			break;
+		case "vanuatu":
+			data = eval('(' + countries.Vanuatu + ')');
+			colour = B;
+			break;
+		case "yemen":
+			data = eval('(' + countries.Yemen + ')');
+			colour = B;
+			break;
+		case "uae":
+			data = eval('(' + countries.United_Arab_Emirates + ')');
+			colour = C;
+			break;
+		case "south africa":
+			data = eval('(' + countries.South_Africa + ')');
+			colour = A;
+			break;
+		case "zambia":
+			data = eval('(' + countries.Zambia + ')');
+			colour = A;
+			break;
+		case "zimbabwe":
+			data = eval('(' + countries.Zimbabwe + ')');
+			colour = C;
+			break;
+		default:
+			found = false;
+		}
+	
+		if(found){
+			map.addSource(country, data);
+			map.addLayer({
+				'id': country,
+				'type': 'fill',
+				'source': country,
+				'layout': {},
+				'paint': {
+					'fill-color': colour,
+					'fill-opacity': 0.8
+				}
+			});
+			document.getElementById('textbox').value = "";	
+			countries_found++;
+			document.getElementById('numbox').innerHTML = countries_found.toString();
+		}
+	}
+	
+	
+	
+}
 
 </script>
 

@@ -21,10 +21,13 @@
 </head>
 <body>
 
+<div id="titleheader">Countries of the World!</div>
+
 <div id='map'></div>
-<div class="startbox"> Start the game! 
-<input id="textbox" type="text" oninput='findCountry()'> </input>
-<p id="numbox">0</p>
+<div class="startbox"> Start typing to start the game! 
+   <input id="textbox" type="text" oninput='findCountry()'> </input>
+   <p>Countries found: <span id="numbox">0</span></p>
+   <div id="clockDiv"></div>
 </div>
 
 <script src="/static/countries_functions.js"></script>

@@ -25,12 +25,57 @@ Egypt includes most of western sahara
 
 Make overlay look nicer.
 
-Add a timer, and start button
+Add results once timer finishes.
 
 Allow user to select language
 **/
 
+/*
+courtesy of http://www.sitepoint.com/build-javascript-countdown-timer-no-dependencies/
+*/
+
+function starttimer(){
+    var timeInMinutes = 10;
+    var currentTime = Date.parse(new Date());
+    var deadline = new Date(currentTime + timeInMinutes*60*1000);
+    endtime = deadline
+    initializeClock('clockDiv', deadline)   
+}    
+
+function getTimeRemaining(endtime){
+  var t = Date.parse(endtime) - Date.parse(new Date());
+  var seconds = Math.floor( (t/1000) % 60 );
+  var minutes = Math.floor( (t/1000/60) % 60 );
+  return {
+    'total': t,
+    'minutes': minutes,
+    'seconds': seconds
+  };
+}
+
+function initializeClock(id, endtime){
+  var clock = document.getElementById(id);
+
+  function updateClock(){
+      var t = getTimeRemaining(endtime);
+      clock.innerHTML = "Remaining time: " + ('0' + t.minutes).slice(-2) + ":" +
+                        ('0' + t.seconds).slice(-2);
+      if(t.total<=0){
+          clearInterval(timeinterval);
+          //TODO: results show up.
+      }
+  }
+  updateClock(); // run function once at first to avoid delay
+  var timeinterval = setInterval(updateClock,1000);
+}
+
+clockStarted = false;
 function findCountry(){
+        if(!clockStarted)
+        {
+            starttimer();
+            clockStarted = true;
+        }
 	var country = document.getElementById('textbox').value;
 	country = country.toLowerCase();
 	country = localization(country, english)
